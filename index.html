@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI智能志愿填报 - 让选择更精准</title>
+    <!-- Tailwind CSS - 使用CDN开发模式，生产环境请使用本地构建版本 -->
+    <script src="https://cdn.tailwindcss.com?callback=tailwindConfigLoaded"></script>
+    <!-- Markdown 解析器 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        function tailwindConfigLoaded() {
+            // Tailwind CDN loaded successfully
+            console.log('Tailwind CSS CDN loaded');
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563EB',
+                        secondary: '#3B82F6',
+                        accent: '#F97316',
+                        background: '#F8FAFC',
+                        text: '#1E293B',
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans SC', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { font-family: 'Noto Sans SC', sans-serif; }
+        
+        .glass-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: visible;
+        }
+        
+        .clay-btn {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+        }
+        
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        .tag-selected {
+            background: #2563EB !important;
+            color: white !important;
+            border-color: #2563EB !important;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 确保AI内容完整显示 */
+        #ai-analysis-content,
+        #ai-recommendation-content {
+            width: 100%;
+            max-width: 100%;
+            overflow: visible !important;
+        }
+        
+        /* Markdown 内容样式 */
+        .markdown-content {
+            line-height: 1.8;
+            font-size: 14px;
+            color: #374151;
+        }
+        .markdown-content h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 1rem 0 0.5rem;
+            color: #1F2937;
+        }
+        .markdown-content h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0.75rem 0 0.5rem;
+            color: #2563EB;
+            border-bottom: 1px solid #E5E7EB;
+            padding-bottom: 0.25rem;
+        }
+        .markdown-content h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+            color: #3B82F6;
+        }
+        .markdown-content p {
+            margin: 0.5rem 0;
+        }
+        .markdown-content ul, .markdown-content ol {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+        .markdown-content li {
+            margin: 0.25rem 0;
+        }
+        .markdown-content strong {
+            font-weight: 600;
+            color: #1F2937;
+        }
+        .markdown-content em {
+            font-style: italic;
+            color: #4B5563;
+        }
+        .markdown-content code {
+            background: #F3F4F6;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.875em;
+        }
+        .markdown-content pre {
+            background: #1F2937;
+            color: #F9FAFB;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 0.75rem 0;
+        }
+        .markdown-content pre code {
+            background: transparent;
+            padding: 0;
+            color: inherit;
+        }
+        .markdown-content blockquote {
+            border-left: 4px solid #2563EB;
+            padding-left: 1rem;
+            margin: 0.75rem 0;
+            color: #4B5563;
+            font-style: italic;
+        }
+        .markdown-content hr {
+            border: none;
+            border-top: 1px solid #E5E7EB;
+            margin: 1rem 0;
+        }
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 0.75rem 0;
+        }
+        .markdown-content th, .markdown-content td {
+            border: 1px solid #E5E7EB;
+            padding: 0.5rem;
+            text-align: left;
+        }
+        .markdown-content th {
+            background: #F3F4F6;
+            font-weight: 600;
+        }
+        .markdown-content a {
+            color: #2563EB;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-background text-text min-h-screen">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-card">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="showPage('home')">
+                    <div class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold text-primary">智填报</span>
+                </div>
+                <div class="hidden md:flex items-center gap-8">
+                    <button onclick="showPage('input')" class="clay-btn px-5 py-2 rounded-xl text-primary font-medium">
+                        立即开始
+                    </button>
+                </div>
+                <button class="md:hidden text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Home Page -->
+    <div id="page-home" class="page">
+        <!-- Hero Section -->
+        <section class="min-h-screen flex items-center justify-center pt-20 px-6">
+            <div class="max-w-5xl mx-auto text-center">
+                <div class="inline-flex items-center gap-2 bg-blue-50 text-primary px-4 py-2 rounded-full text-sm font-medium mb-8">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                    </svg>
+                    AI驱动 - 精准推荐
+                </div>
+                <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+                    <span class="text-primary">AI智能</span>志愿填报<br>
+                    <span class="text-text">让选择更精准</span>
+                </h1>
+                <p class="text-xl text-gray-500 mb-10 max-w-2xl mx-auto">
+                    基于通义千问大模型，结合海量数据分析，为您提供"冲-稳-保"三档志愿建议，降低填报风险，提高录取概率
+                </p>
+                
+                <!-- Quick Input Card -->
+                <div class="glass-card rounded-3xl p-8 max-w-2xl mx-auto mb-12">
+                    <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        输入信息，快速开始智能推荐
+                    </h3>
+                    
+                    <!-- 高考省份 -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3 text-left">高考省份 *</label>
+                        <div class="grid grid-cols-8 gap-1 max-h-32 overflow-y-auto p-2 bg-gray-50 rounded-xl">
+                            <button type="button" onclick="selectQuickProvince(this, '北京')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">北京</button>
+                            <button type="button" onclick="selectQuickProvince(this, '天津')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">天津</button>
+                            <button type="button" onclick="selectQuickProvince(this, '河北')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">河北</button>
+                            <button type="button" onclick="selectQuickProvince(this, '山西')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">山西</button>
+                            <button type="button" onclick="selectQuickProvince(this, '内蒙古')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">内蒙古</button>
+                            <button type="button" onclick="selectQuickProvince(this, '辽宁')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">辽宁</button>
+                            <button type="button" onclick="selectQuickProvince(this, '吉林')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">吉林</button>
+                            <button type="button" onclick="selectQuickProvince(this, '黑龙江')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">黑龙江</button>
+                            <button type="button" onclick="selectQuickProvince(this, '上海')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">上海</button>
+                            <button type="button" onclick="selectQuickProvince(this, '江苏')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">江苏</button>
+                            <button type="button" onclick="selectQuickProvince(this, '浙江')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">浙江</button>
+                            <button type="button" onclick="selectQuickProvince(this, '安徽')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">安徽</button>
+                            <button type="button" onclick="selectQuickProvince(this, '福建')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">福建</button>
+                            <button type="button" onclick="selectQuickProvince(this, '江西')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">江西</button>
+                            <button type="button" onclick="selectQuickProvince(this, '山东')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">山东</button>
+                            <button type="button" onclick="selectQuickProvince(this, '河南')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">河南</button>
+                            <button type="button" onclick="selectQuickProvince(this, '湖北')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">湖北</button>
+                            <button type="button" onclick="selectQuickProvince(this, '湖南')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">湖南</button>
+                            <button type="button" onclick="selectQuickProvince(this, '广东')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">广东</button>
+                            <button type="button" onclick="selectQuickProvince(this, '广西')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">广西</button>
+                            <button type="button" onclick="selectQuickProvince(this, '海南')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">海南</button>
+                            <button type="button" onclick="selectQuickProvince(this, '重庆')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">重庆</button>
+                            <button type="button" onclick="selectQuickProvince(this, '四川')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">四川</button>
+                            <button type="button" onclick="selectQuickProvince(this, '贵州')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">贵州</button>
+                            <button type="button" onclick="selectQuickProvince(this, '云南')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">云南</button>
+                            <button type="button" onclick="selectQuickProvince(this, '西藏')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">西藏</button>
+                            <button type="button" onclick="selectQuickProvince(this, '陕西')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">陕西</button>
+                            <button type="button" onclick="selectQuickProvince(this, '甘肃')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">甘肃</button>
+                            <button type="button" onclick="selectQuickProvince(this, '青海')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">青海</button>
+                            <button type="button" onclick="selectQuickProvince(this, '宁夏')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">宁夏</button>
+                            <button type="button" onclick="selectQuickProvince(this, '新疆')" class="quick-province-btn p-2 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-xs">新疆</button>
+                        </div>
+                    </div>
+
+                    <!-- 首选科目 -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3 text-left">首选科目 *</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="quick-subject" value="物理" class="sr-only peer" onchange="updateQuickSubject(this.value)">
+                                <div class="p-3 rounded-xl border-2 border-gray-200 peer-checked:border-primary peer-checked:bg-blue-50 transition-all text-center flex items-center justify-center gap-2">
+                                    <span class="text-xl">🔬</span>
+                                    <span class="font-medium">物理类</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="quick-subject" value="历史" class="sr-only peer" onchange="updateQuickSubject(this.value)">
+                                <div class="p-3 rounded-xl border-2 border-gray-200 peer-checked:border-primary peer-checked:bg-blue-50 transition-all text-center flex items-center justify-center gap-2">
+                                    <span class="text-xl">📜</span>
+                                    <span class="font-medium">历史类</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 再选科目 -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3 text-left">再选科目（最多2科）</label>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="toggleQuickSubject(this, '化学')" class="quick-subject-btn px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer text-sm">化学</button>
+                            <button type="button" onclick="toggleQuickSubject(this, '生物')" class="quick-subject-btn px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer text-sm">生物</button>
+                            <button type="button" onclick="toggleQuickSubject(this, '地理')" class="quick-subject-btn px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer text-sm">地理</button>
+                            <button type="button" onclick="toggleQuickSubject(this, '思想政治')" class="quick-subject-btn px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer text-sm">思想政治</button>
+                        </div>
+                    </div>
+
+                    <!-- 分数和排名 -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2 text-left">高考分数 *</label>
+                            <div class="relative">
+                                <input type="number" id="quick-score" placeholder="618" min="0" max="750"
+                                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-center text-lg font-bold">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">分</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2 text-left">高考排名 *</label>
+                            <div class="relative">
+                                <input type="number" id="quick-rank" placeholder="12500" min="0"
+                                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-center text-lg font-bold">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">名</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="quickStart()" class="w-full bg-gradient-to-r from-primary to-secondary text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-primary/30 transition-all transform hover:-translate-y-0.5">
+                        开始智能推荐
+                    </button>
+                </div>
+                
+                <!-- Stats -->
+                <div class="flex justify-center gap-12 text-center">
+                    <div>
+                        <div class="text-3xl font-bold text-primary">AI驱动</div>
+                        <div class="text-gray-500">智能推荐</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold text-primary">大模型</div>
+                        <div class="text-gray-500">深度分析</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold text-primary">个性化</div>
+                        <div class="text-gray-500">精准匹配</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="py-20 px-6 bg-white">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4">为什么选择我们</h2>
+                    <p class="text-gray-500 text-lg">专业、精准、易用的智能志愿填报助手</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="glass-card rounded-2xl p-8 card-hover text-center">
+                        <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">AI智能推荐</h3>
+                        <p class="text-gray-500">基于通义千问大模型，深度分析考生情况，提供个性化推荐方案</p>
+                    </div>
+                    <div class="glass-card rounded-2xl p-8 card-hover text-center">
+                        <div class="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">快速精准</h3>
+                        <p class="text-gray-500">秒级生成推荐报告，冲稳保三档清晰，录取概率一目了然</p>
+                    </div>
+                    <div class="glass-card rounded-2xl p-8 card-hover text-center">
+                        <div class="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">专业可靠</h3>
+                        <p class="text-gray-500">专业团队优化推荐算法，结果科学合理，参考价值高</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="py-20 px-6">
+            <div class="max-w-4xl mx-auto text-center">
+                <div class="glass-card rounded-3xl p-12 bg-gradient-to-br from-primary/5 to-secondary/5">
+                    <h2 class="text-3xl font-bold mb-4">准备好开始了吗？</h2>
+                    <p class="text-gray-500 mb-8">输入您的分数，开启智能志愿填报之旅</p>
+                    <button onclick="showPage('input')" class="bg-gradient-to-r from-primary to-secondary text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-primary/30 transition-all transform hover:-translate-y-0.5">
+                        立即开始
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Input Page -->
+    <div id="page-input" class="page hidden">
+        <section class="min-h-screen pt-24 pb-12 px-6">
+            <div class="max-w-3xl mx-auto">
+                <!-- Progress Steps -->
+                <div class="flex items-center justify-center gap-4 mb-12">
+                    <div class="flex items-center gap-2">
+                        <div id="step1-indicator" class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-medium">1</div>
+                        <span class="text-primary font-medium hidden sm:inline">基本信息</span>
+                    </div>
+                    <div class="w-12 h-0.5 bg-gray-200"><div id="progress1" class="h-full bg-primary transition-all" style="width: 0%"></div></div>
+                    <div class="flex items-center gap-2">
+                        <div id="step2-indicator" class="w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center font-medium">2</div>
+                        <span class="text-gray-500 hidden sm:inline">成绩信息</span>
+                    </div>
+                    <div class="w-12 h-0.5 bg-gray-200"><div id="progress2" class="h-full bg-primary transition-all" style="width: 0%"></div></div>
+                    <div class="flex items-center gap-2">
+                        <div id="step3-indicator" class="w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center font-medium">3</div>
+                        <span class="text-gray-500 hidden sm:inline">意向偏好</span>
+                    </div>
+                </div>
+
+                <!-- Step 1: Basic Info -->
+                <div id="form-step1" class="glass-card rounded-3xl p-8 mb-8">
+                    <h2 class="text-2xl font-bold mb-2">第一步：基本信息</h2>
+                    <p class="text-gray-500 mb-8">告诉我们您所在地区和选科情况</p>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">所属省份 *</label>
+                            <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                                <button type="button" onclick="selectProvince(this, '北京')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">北京</button>
+                                <button type="button" onclick="selectProvince(this, '天津')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">天津</button>
+                                <button type="button" onclick="selectProvince(this, '河北')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">河北</button>
+                                <button type="button" onclick="selectProvince(this, '山西')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">山西</button>
+                                <button type="button" onclick="selectProvince(this, '内蒙古')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">内蒙古</button>
+                                <button type="button" onclick="selectProvince(this, '辽宁')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">辽宁</button>
+                                <button type="button" onclick="selectProvince(this, '吉林')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">吉林</button>
+                                <button type="button" onclick="selectProvince(this, '黑龙江')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">黑龙江</button>
+                                <button type="button" onclick="selectProvince(this, '上海')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">上海</button>
+                                <button type="button" onclick="selectProvince(this, '江苏')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">江苏</button>
+                                <button type="button" onclick="selectProvince(this, '浙江')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">浙江</button>
+                                <button type="button" onclick="selectProvince(this, '安徽')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">安徽</button>
+                                <button type="button" onclick="selectProvince(this, '福建')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">福建</button>
+                                <button type="button" onclick="selectProvince(this, '江西')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">江西</button>
+                                <button type="button" onclick="selectProvince(this, '山东')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">山东</button>
+                                <button type="button" onclick="selectProvince(this, '河南')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">河南</button>
+                                <button type="button" onclick="selectProvince(this, '湖北')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">湖北</button>
+                                <button type="button" onclick="selectProvince(this, '湖南')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">湖南</button>
+                                <button type="button" onclick="selectProvince(this, '广东')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">广东</button>
+                                <button type="button" onclick="selectProvince(this, '广西')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">广西</button>
+                                <button type="button" onclick="selectProvince(this, '海南')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">海南</button>
+                                <button type="button" onclick="selectProvince(this, '重庆')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">重庆</button>
+                                <button type="button" onclick="selectProvince(this, '四川')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">四川</button>
+                                <button type="button" onclick="selectProvince(this, '贵州')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">贵州</button>
+                                <button type="button" onclick="selectProvince(this, '云南')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">云南</button>
+                                <button type="button" onclick="selectProvince(this, '西藏')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">西藏</button>
+                                <button type="button" onclick="selectProvince(this, '陕西')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">陕西</button>
+                                <button type="button" onclick="selectProvince(this, '甘肃')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">甘肃</button>
+                                <button type="button" onclick="selectProvince(this, '青海')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">青海</button>
+                                <button type="button" onclick="selectProvince(this, '宁夏')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">宁夏</button>
+                                <button type="button" onclick="selectProvince(this, '新疆')" class="province-btn p-3 rounded-xl border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all text-sm">新疆</button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">首选科目 *</label>
+                            <div class="flex gap-4">
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="subject" value="物理" class="sr-only peer" onchange="updateSubject(this.value)">
+                                    <div class="p-4 rounded-xl border-2 border-gray-200 peer-checked:border-primary peer-checked:bg-blue-50 transition-all text-center">
+                                        <span class="text-2xl mb-2 block">物理</span>
+                                        <span class="font-medium">物理类</span>
+                                    </div>
+                                </label>
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="subject" value="历史" class="sr-only peer" onchange="updateSubject(this.value)">
+                                    <div class="p-4 rounded-xl border-2 border-gray-200 peer-checked:border-primary peer-checked:bg-blue-50 transition-all text-center">
+                                        <span class="text-2xl mb-2 block">历史</span>
+                                        <span class="font-medium">历史类</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="nextStep(1)" class="w-full mt-8 bg-gradient-to-r from-primary to-secondary text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-primary/30 transition-all">
+                        下一步：成绩信息
+                    </button>
+                </div>
+
+                <!-- Step 2: Score Info -->
+                <div id="form-step2" class="glass-card rounded-3xl p-8 mb-8 hidden">
+                    <h2 class="text-2xl font-bold mb-2">第二步：成绩信息</h2>
+                    <p class="text-gray-500 mb-8">请输入您的高考成绩，信息越准确推荐越精准</p>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">高考分数 *</label>
+                            <div class="relative">
+                                <input type="number" id="score" placeholder="0" min="0" max="750"
+                                    class="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-2xl text-center font-bold">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">分</span>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-2 text-center">请输入0-750之间的整数</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">分数位次（选填）</label>
+                            <div class="relative">
+                                <input type="number" id="rank" placeholder="0" min="0"
+                                    class="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-2xl text-center font-bold">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">名</span>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-2 text-center">如有请填写，更精准</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Score Hint -->
+                    <div id="score-hint" class="mt-6 p-4 bg-blue-50 rounded-xl hidden">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-primary mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                            </svg>
+                            <div class="text-sm text-gray-600">
+                                <p class="font-medium text-primary">根据您的分数估算</p>
+                                <p id="score-estimate"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4 mt-8">
+                        <button onclick="prevStep(2)" class="flex-1 bg-gray-100 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-200 transition-all">
+                            上一步
+                        </button>
+                        <button onclick="nextStep(2)" class="flex-1 bg-gradient-to-r from-primary to-secondary text-white py-4 rounded-xl font-semibold hover:shadow-lg hover:shadow-primary/30 transition-all">
+                            下一步：意向偏好
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Preferences -->
+                <div id="form-step3" class="glass-card rounded-3xl p-8 mb-8 hidden">
+                    <h2 class="text-2xl font-bold mb-2">第三步：意向偏好</h2>
+                    <p class="text-gray-500 mb-8">选择您感兴趣的专业和城市（选填，可跳过）</p>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">意向专业（最多5个）</label>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <button type="button" onclick="toggleTag(this, '计算机')" class="major-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">计算机</button>
+                                <button type="button" onclick="toggleTag(this, '人工智能')" class="major-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">人工智能</button>
+                                <button type="button" onclick="toggleTag(this, '电子信息')" class="major-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">电子信息</button>
+                                <button type="button" onclick="toggleTag(this, '自动化')" class="major-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">自动化</button>
+                                <button type="button" onclick="toggleTag(this, '机械工程')" class="major-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">机械工程</button>
+                                <button type="button" onclick="toggleTag(this, '临床医学')" class="major-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">临床医学</button>
+                                <button type="button" onclick="toggleTag(this, '金融学')" class="major-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">金融学</button>
+                                <button type="button" onclick="toggleTag(this, '法学')" class="major-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">法学</button>
+                                <button type="button" onclick="toggleTag(this, '新闻学')" class="major-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">新闻学</button>
+                                <button type="button" onclick="toggleTag(this, '建筑学')" class="major-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">建筑学</button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">意向城市（最多10个）</label>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <button type="button" onclick="toggleTag(this, '北京')" class="city-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">北京</button>
+                                <button type="button" onclick="toggleTag(this, '上海')" class="city-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">上海</button>
+                                <button type="button" onclick="toggleTag(this, '广州')" class="city-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">广州</button>
+                                <button type="button" onclick="toggleTag(this, '深圳')" class="city-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">深圳</button>
+                                <button type="button" onclick="toggleTag(this, '杭州')" class="city-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">杭州</button>
+                                <button type="button" onclick="toggleTag(this, '南京')" class="city-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">南京</button>
+                                <button type="button" onclick="toggleTag(this, '武汉')" class="city-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">武汉</button>
+                                <button type="button" onclick="toggleTag(this, '西安')" class="city-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">西安</button>
+                                <button type="button" onclick="toggleTag(this, '成都')" class="city-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">成都</button>
+                                <button type="button" onclick="toggleTag(this, '重庆')" class="city-tag px-4 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-blue-50 transition-all cursor-pointer">重庆</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4 mt-8">
+                        <button onclick="prevStep(3)" class="flex-1 bg-gray-100 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-200 transition-all">
+                            上一步
+                        </button>
+                        <button onclick="generateRecommendation()" class="flex-1 bg-gradient-to-r from-accent to-orange-500 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-accent/30 transition-all">
+                            生成推荐报告
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Results Page -->
+    <div id="page-results" class="page hidden">
+        <section class="min-h-screen pt-24 pb-12 px-6">
+            <div class="max-w-4xl mx-auto">
+                <!-- Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8">
+                    <div>
+                        <button onclick="showPage('input')" class="text-gray-500 hover:text-primary mb-2 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            修改信息
+                        </button>
+                        <h1 class="text-2xl font-bold">AI推荐结果</h1>
+                        <p class="text-gray-500">
+                            <span id="result-province" class="text-primary font-bold">-</span> ·
+                            <span id="result-subject" class="text-primary font-bold">-</span>类 ·
+                            分数 <span id="result-score" class="text-primary font-bold">618</span> 分 ·
+                            排名 <span id="result-rank" class="text-primary font-bold">-</span> 名
+                        </p>
+                    </div>
+                    <div class="flex gap-3 mt-4 md:mt-0">
+                        <button onclick="regenerateRecommendation()" class="clay-btn px-4 py-2 rounded-xl flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            重新生成
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading-indicator" class="text-center py-20" style="display: block;">
+                    <div class="w-20 h-20 border-4 border-primary border-t-transparent rounded-full mx-auto mb-6" style="animation: spin 1s linear infinite;"></div>
+                    <p class="text-xl text-gray-600 mb-2">AI正在为您分析...</p>
+                    <p class="text-gray-400">根据您的信息生成个性化推荐方案</p>
+                </div>
+
+                <!-- AI Analysis Card -->
+                <div id="ai-analysis-card" class="glass-card rounded-2xl p-6 mb-6 hidden border-l-4 border-primary" style="display: none; min-height: 150px; width: 100%;">
+                    <h3 class="font-bold text-primary mb-3 text-lg">AI综合分析</h3>
+                    <div id="ai-analysis-content" class="text-gray-700" style="min-height: 80px; overflow: visible;"></div>
+                </div>
+
+                <!-- AI Recommendation Card -->
+                <div id="ai-recommendation-card" class="glass-card rounded-2xl p-6 mb-6 hidden border-l-4 border-orange-500" style="display: none; min-height: 300px; width: 100%;">
+                    <h3 class="font-bold text-orange-500 mb-3 text-lg">个性化推荐方案</h3>
+                    <div id="ai-recommendation-content" class="text-gray-700" style="min-height: 200px; overflow: visible;"></div>
+                </div>
+
+                <!-- Report Info -->
+                <div id="report-info" class="mt-8 text-center text-gray-400 text-sm hidden">
+                    报告编号：<span id="report-id">-</span> · 生成时间：<span id="report-time">-</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" style="position: fixed; bottom: 24px; right: 24px; background: white; border-radius: 12px; padding: 16px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 9999; opacity: 0; transform: translateY(80px); transition: all 0.3s ease;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span id="toast-icon" style="font-size: 20px; font-weight: bold;">V</span>
+            <span id="toast-message">操作成功</span>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Global State ====================
+        let formData = {
+            province: '',
+            subject: '',
+            category: '普通',
+            score: null,
+            rank: null,
+            majors: [],
+            cities: []
+        };
+
+        let currentStep = 1;
+        let lastRequestData = null;
+
+        // ==================== Navigation ====================
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.add('hidden');
+                p.style.display = 'none';
+            });
+            const targetPage = document.getElementById(`page-${page}`);
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+                targetPage.style.display = 'block';
+            }
+            if (window.scrollTo) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // ==================== Form Functions ====================
+        function selectProvince(btn, province) {
+            document.querySelectorAll('.province-btn').forEach(b => {
+                b.classList.remove('tag-selected', 'border-primary');
+            });
+            btn.classList.add('tag-selected', 'border-primary');
+            formData.province = province;
+        }
+
+        function updateSubject(value) {
+            formData.subject = value;
+        }
+
+        function toggleTag(btn, value) {
+            const tagType = btn.classList.contains('major-tag') ? 'majors' : 'cities';
+            const max = tagType === 'majors' ? 5 : 10;
+            
+            if (btn.classList.contains('tag-selected')) {
+                btn.classList.remove('tag-selected');
+                formData[tagType] = formData[tagType].filter(v => v !== value);
+            } else {
+                if (formData[tagType].length >= max) {
+                    showToast(`最多只能选择${max}个`, 'warning');
+                    return;
+                }
+                btn.classList.add('tag-selected');
+                formData[tagType].push(value);
+            }
+        }
+
+        function nextStep(current) {
+            // Validate current step
+            if (current === 1) {
+                if (!formData.province) {
+                    showToast('请选择所属省份', 'warning');
+                    return;
+                }
+                if (!formData.subject) {
+                    showToast('请选择首选科目', 'warning');
+                    return;
+                }
+                document.getElementById('progress1').style.width = '100%';
+            }
+            
+            if (current === 2) {
+                const score = parseInt(document.getElementById('score').value);
+                if (!score || score < 0 || score > 750) {
+                    showToast('请输入有效的分数（0-750）', 'warning');
+                    return;
+                }
+                formData.score = score;
+                formData.rank = parseInt(document.getElementById('rank').value) || null;
+                document.getElementById('progress2').style.width = '100%';
+            }
+            
+            // Update step indicators
+            document.getElementById(`step${current}-indicator`).classList.remove('bg-primary', 'text-white');
+            document.getElementById(`step${current}-indicator`).classList.add('bg-green-500', 'text-white', '!text-white');
+            document.getElementById(`step${current}-indicator`).innerHTML = '✓';
+            
+            const nextIndicator = document.getElementById(`step${current + 1}-indicator`);
+            nextIndicator.classList.remove('bg-gray-200', 'text-gray-500');
+            nextIndicator.classList.add('bg-primary', 'text-white');
+            
+            // Show next form
+            const currentForm = document.getElementById(`form-step${current}`);
+            const nextForm = document.getElementById(`form-step${current + 1}`);
+            if (currentForm) currentForm.classList.add('hidden');
+            if (nextForm) nextForm.classList.remove('hidden');
+            
+            currentStep = current + 1;
+        }
+
+        function prevStep(current) {
+            const prevForm = document.getElementById(`form-step${current - 1}`);
+            const currentForm = document.getElementById(`form-step${current}`);
+            if (prevForm) prevForm.classList.remove('hidden');
+            if (currentForm) currentForm.classList.add('hidden');
+            
+            const prevIndicator = document.getElementById(`step${current - 1}-indicator`);
+            prevIndicator.classList.remove('bg-green-500');
+            prevIndicator.classList.add('bg-primary');
+            prevIndicator.innerHTML = current - 1;
+            
+            currentStep = current - 1;
+        }
+
+        // ==================== Quick Form Functions ====================
+        let quickFormData = {
+            province: '',
+            subject: '',
+            secondSubjects: [],
+            score: null,
+            rank: null
+        };
+
+        function selectQuickProvince(btn, province) {
+            document.querySelectorAll('.quick-province-btn').forEach(b => {
+                b.classList.remove('tag-selected', 'border-primary', 'bg-blue-50');
+            });
+            btn.classList.add('tag-selected', 'border-primary', 'bg-blue-50');
+            quickFormData.province = province;
+        }
+
+        function updateQuickSubject(value) {
+            quickFormData.subject = value;
+        }
+
+        function toggleQuickSubject(btn, subject) {
+            if (btn.classList.contains('tag-selected')) {
+                btn.classList.remove('tag-selected');
+                quickFormData.secondSubjects = quickFormData.secondSubjects.filter(s => s !== subject);
+            } else {
+                if (quickFormData.secondSubjects.length >= 2) {
+                    showToast('再选科目最多选择2科', 'warning');
+                    return;
+                }
+                btn.classList.add('tag-selected');
+                quickFormData.secondSubjects.push(subject);
+            }
+        }
+
+        // ==================== API Configuration ====================
+        const API_BASE_URL = 'http://localhost:8000';
+
+        // ==================== Recommendation ====================
+        function quickStart() {
+            const score = document.getElementById('quick-score').value;
+            const rank = document.getElementById('quick-rank').value;
+            
+            if (!quickFormData.province) {
+                showToast('请选择高考省份', 'warning');
+                return;
+            }
+            if (!quickFormData.subject) {
+                showToast('请选择首选科目', 'warning');
+                return;
+            }
+            if (!score) {
+                showToast('请输入高考分数', 'warning');
+                return;
+            }
+            if (!rank) {
+                showToast('请输入高考排名', 'warning');
+                return;
+            }
+            
+            quickFormData.score = parseInt(score);
+            quickFormData.rank = parseInt(rank);
+            
+            // Update global formData
+            formData.province = quickFormData.province;
+            formData.subject = quickFormData.subject;
+            formData.secondSubjects = quickFormData.secondSubjects;
+            formData.score = quickFormData.score;
+            formData.rank = quickFormData.rank;
+            formData.majors = [];
+            formData.cities = [];
+            
+            generateRecommendation();
+        }
+
+        async function generateRecommendation() {
+            if (!formData.score) {
+                showToast('请输入高考分数', 'warning');
+                return;
+            }
+            
+            showPage('results');
+            document.getElementById('result-score').textContent = formData.score;
+            document.getElementById('result-rank').textContent = formData.rank || '-';
+            document.getElementById('result-province').textContent = formData.province || '-';
+            document.getElementById('result-subject').textContent = formData.subject || '-';
+            
+            // Show loading, hide results
+            document.getElementById('loading-indicator').style.display = 'block';
+            document.getElementById('ai-analysis-card').style.display = 'none';
+            document.getElementById('ai-recommendation-card').style.display = 'none';
+            document.getElementById('report-info').style.display = 'none';
+            
+            // Prepare request data
+            const requestData = {
+                student: {
+                    province: formData.province,
+                    subject: formData.subject,
+                    second_subjects: formData.secondSubjects || [],
+                    score: formData.score,
+                    rank: formData.rank,
+                    majors: formData.majors || [],
+                    cities: formData.cities || []
+                }
+            };
+            
+            lastRequestData = requestData;
+            
+            try {
+                // Call backend API
+                const response = await fetch(`${API_BASE_URL}/api/recommend`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('API请求失败');
+                }
+                
+                const result = await response.json();
+                
+                // Hide loading
+                document.getElementById('loading-indicator').style.display = 'none';
+                
+                // Display results
+                displayAIResults(result);
+                showToast('AI分析完成！', 'success');
+                
+            } catch (error) {
+                console.error('API调用失败:', error);
+                document.getElementById('loading-indicator').style.display = 'none';
+                showToast('网络请求失败，请检查后端服务是否启动', 'error');
+            }
+        }
+
+        function regenerateRecommendation() {
+            if (lastRequestData) {
+                formData.province = lastRequestData.student.province;
+                formData.subject = lastRequestData.student.subject;
+                formData.secondSubjects = lastRequestData.student.second_subjects;
+                formData.score = lastRequestData.student.score;
+                formData.rank = lastRequestData.student.rank;
+                formData.majors = lastRequestData.student.majors;
+                formData.cities = lastRequestData.student.cities;
+                generateRecommendation();
+            } else {
+                showToast('请先填写信息生成推荐', 'warning');
+                showPage('input');
+            }
+        }
+
+        function displayAIResults(result) {
+            console.log('AI推荐内容长度:', result.ai_recommendation?.length || 0);
+            console.log('AI分析内容长度:', result.ai_analysis?.length || 0);
+            console.log('AI推荐内容:', result.ai_recommendation);
+            console.log('AI分析内容:', result.ai_analysis);
+            
+            // 显示AI分析
+            const analysisContent = document.getElementById('ai-analysis-content');
+            const analysisCard = document.getElementById('ai-analysis-card');
+            if (analysisContent) {
+                analysisContent.innerHTML = formatAIResponse(result.ai_analysis || '暂无分析内容');
+            }
+            if (analysisCard) {
+                analysisCard.classList.remove('hidden');
+                analysisCard.style.display = 'block';
+            }
+            
+            // 显示AI推荐
+            const recContent = document.getElementById('ai-recommendation-content');
+            const recCard = document.getElementById('ai-recommendation-card');
+            if (recContent) {
+                recContent.innerHTML = formatAIResponse(result.ai_recommendation || '暂无推荐内容');
+            }
+            if (recCard) {
+                recCard.classList.remove('hidden');
+                recCard.style.display = 'block';
+            }
+            
+            // 报告信息
+            const reportId = document.getElementById('report-id');
+            const reportTime = document.getElementById('report-time');
+            const reportInfo = document.getElementById('report-info');
+            if (reportId) reportId.textContent = result.report_id || 'N/A';
+            if (reportTime) reportTime.textContent = result.created_at ? new Date(result.created_at).toLocaleString('zh-CN') : 'N/A';
+            if (reportInfo) {
+                reportInfo.classList.remove('hidden');
+                reportInfo.style.display = 'block';
+            }
+            
+            // 滚动到AI推荐卡片位置
+            setTimeout(() => {
+                recCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        function formatAIResponse(text) {
+            if (!text) return '<p class="text-gray-400">暂无内容</p>';
+            
+            // 配置 marked.js 选项
+            if (typeof marked !== 'undefined') {
+                marked.setOptions({
+                    breaks: true,        // GFM 换行符转换为 <br>
+                    gfm: true,           // 启用 GitHub 风格的 Markdown
+                    headerIds: false,    // 禁用标题 ID
+                    mangle: false        // 不转义 HTML
+                });
+                
+                // 使用 marked 解析 Markdown
+                let html = marked.parse(text);
+                
+                // 添加自定义样式类
+                return `<div class="markdown-content">${html}</div>`;
+            }
+            
+            // fallback: 如果 marked 未加载，使用简单的文本处理
+            let escaped = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            escaped = escaped.replace(/\n/g, '<br>');
+            return `<div style="line-height: 1.8; font-size: 14px;">${escaped}</div>`;
+        }
+
+        // ==================== Toast ====================
+        function showToast(message, type = 'success') {
+            try {
+                const toast = document.getElementById('toast');
+                const icon = document.getElementById('toast-icon');
+                const msg = document.getElementById('toast-message');
+                
+                if (!toast || !icon || !msg) return;
+                
+                msg.textContent = message;
+                
+                if (type === 'success') {
+                    icon.textContent = 'V';
+                    icon.style.color = '#22c55e';
+                } else if (type === 'warning') {
+                    icon.textContent = '!';
+                    icon.style.color = '#eab308';
+                } else {
+                    icon.textContent = 'X';
+                    icon.style.color = '#ef4444';
+                }
+                
+                toast.style.transform = 'translateY(0)';
+                toast.style.opacity = '1';
+                
+                setTimeout(() => {
+                    if (toast) {
+                        toast.style.transform = 'translateY(80px)';
+                        toast.style.opacity = '0';
+                    }
+                }, 3000);
+            } catch (e) {
+                console.log('Toast error:', e);
+            }
+        }
+
+        // ==================== Score Input Hint ====================
+        document.getElementById('score')?.addEventListener('input', function(e) {
+            const score = parseInt(e.target.value);
+            const hint = document.getElementById('score-hint');
+            const estimate = document.getElementById('score-estimate');
+            
+            if (score && score > 0) {
+                hint.classList.remove('hidden');
+                
+                let tier, description;
+                if (score >= 680) {
+                    tier = '顶尖层次';
+                    description = '有望冲击清华北大等顶尖名校';
+                } else if (score >= 650) {
+                    tier = '优秀层次';
+                    description = '可考虑C9联盟及985强校';
+                } else if (score >= 600) {
+                    tier = '良好层次';
+                    description = '211院校竞争力强，专业选择空间大';
+                } else if (score >= 550) {
+                    tier = '中上层次';
+                    description = '重点一本院校可争取';
+                } else if (score >= 500) {
+                    tier = '中间层次';
+                    description = '普通一本和优质二本院校为主';
+                } else {
+                    tier = '基础层次';
+                    description = '建议关注二本批次及专科院校';
+                }
+                
+                estimate.textContent = `您的成绩位于${tier}，${description}`;
+            } else {
+                hint.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
